@@ -10,7 +10,7 @@ import (
 
 type Token struct {
 	Val  string
-	Type tokenType
+	Type TokenType
 }
 
 type Tokeniser struct {
@@ -21,9 +21,9 @@ type Tokeniser struct {
 
 type tokenFunc func(*Tokeniser) (Token, tokenFunc)
 
-type tokenType int
+type TokenType int
 
-func (t tokenType) String() string {
+func (t TokenType) String() string {
 	switch t {
 	case TokenIdentifier:
 		return "Identifier"
@@ -53,7 +53,7 @@ func (t tokenType) String() string {
 }
 
 const (
-	TokenIdentifier tokenType = iota
+	TokenIdentifier TokenType = iota
 	TokenNumber
 	TokenString
 	TokenKeyword
@@ -62,8 +62,8 @@ const (
 	TokenComment
 	TokenOperator
 	TokenDelimiter
-	TokenDone  tokenType = -1
-	TokenError tokenType = -2
+	TokenDone  TokenType = -1
+	TokenError TokenType = -2
 )
 
 const whiteSpace = " \t\f"
