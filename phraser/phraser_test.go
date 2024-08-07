@@ -10,6 +10,7 @@ var testRecipe string
 
 func TestPhraser(t *testing.T) {
 	phrases, err := doPhrase(testRecipe)
+
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	} else if phrases[0].Type != PhraseTop {

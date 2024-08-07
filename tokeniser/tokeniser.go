@@ -75,6 +75,8 @@ const binary = "01"
 
 var keywords = [...]string{"False", "await", "else", "import", "pass", "None", "break", "except", "in", "raise", "True", "class", "finally", "is", "return", "and", "continue", "for", "lambda", "try", "as", "def", "from", "nonlocal", "while", "assert", "del", "global", "not", "with", "async", "elif", "if", "or", "yield"}
 
+var bracketStack []byte
+
 var id_start = []*unicode.RangeTable{unicode.Other_ID_Start, unicode.Lu, unicode.Ll, unicode.Lt, unicode.Lm, unicode.Lo, unicode.Nl}
 var id_continue = append(id_start, unicode.Other_ID_Continue, unicode.Mn, unicode.Mc, unicode.Nd, unicode.Pc)
 
@@ -86,6 +88,9 @@ func Tokenise(input string) ([]Token, error) {
 		var token Token
 		token, state = state(&t)
 		if token.Type == TokenDone {
+			if len(bracketStack) != 0 {
+				return nil, errors.New("unmatched bracket")
+			}
 			return tokens, nil
 		} else if token.Type == TokenError {
 			return nil, errors.New(token.Val)
@@ -96,12 +101,28 @@ func Tokenise(input string) ([]Token, error) {
 
 func stateStart(t *Tokeniser) (Token, tokenFunc) {
 	if t.Accept(whiteSpace) {
-		t.AcceptRun(whiteSpace)
+		if len(bracketStack) == 0 {
+			t.AcceptRun(whiteSpace)
+		} else {
+			t.AcceptRun(whiteSpace + newLine)
+		}
 		return Token{t.Get(), TokenWhitespace}, stateStart
 	}
+	if t.Accept("\\") {
+		if t.Accept(newLine) {
+			return Token{t.Get(), TokenWhitespace}, stateStart
+		} else {
+			return t.stateError("invalid backslash: no following newline")
+		}
+	}
 	if t.Accept(newLine) {
-		t.AcceptRun(newLine)
-		return Token{t.Get(), TokenNewline}, stateStart
+		if len(bracketStack) == 0 {
+			t.AcceptRun(newLine)
+			return Token{t.Get(), TokenNewline}, stateStart
+		} else {
+			t.AcceptRun(whiteSpace + newLine)
+			return Token{t.Get(), TokenWhitespace}, stateStart
+		}
 	}
 	if c := t.Peek(); t.Accept("rRuUfFbB") {
 		return t.possibleString(c)
@@ -326,9 +347,34 @@ func (t *Tokeniser) operator() (Token, tokenFunc) {
 		}
 	case '~':
 		t.Next()
+	case '(', '{', '[':
+		t.Next()
+		bracketStack = append(bracketStack, byte(c))
+		tokenType = TokenDelimiter
+	case ')':
+		t.Next()
+		if len(bracketStack) == 0 || bracketStack[len(bracketStack)-1] != '(' {
+			return t.stateError("invalid bracket")
+		}
+		bracketStack = bracketStack[:len(bracketStack)-1]
+		tokenType = TokenDelimiter
+	case ']':
+		t.Next()
+		if len(bracketStack) == 0 || bracketStack[len(bracketStack)-1] != '[' {
+			return t.stateError("invalid bracket")
+		}
+		bracketStack = bracketStack[:len(bracketStack)-1]
+		tokenType = TokenDelimiter
+	case '}':
+		t.Next()
+		if len(bracketStack) == 0 || bracketStack[len(bracketStack)-1] != '{' {
+			return t.stateError("invalid bracket")
+		}
+		bracketStack = bracketStack[:len(bracketStack)-1]
+		tokenType = TokenDelimiter
 
 	default:
-		if !t.Accept("()[]{},.;") {
+		if !t.Accept(",.;") {
 			return t.stateError("invalid delimiter")
 		}
 

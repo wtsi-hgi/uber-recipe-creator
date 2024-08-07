@@ -2,6 +2,7 @@ package phraser
 
 import (
 	"errors"
+	"fmt"
 	"slices"
 
 	"github.com/wtsi-hgi/uber-recipe-creator/tokeniser"
@@ -80,7 +81,7 @@ func doPhrase(input string) ([]Phrase, error) {
 	for {
 		var phrase Phrase
 		phrase, state = state(&p)
-
+		fmt.Println(phrase)
 		if phrase.Type == PhraseDone {
 			return phrases, nil
 		} else if phrase.Type == PhraseError {
@@ -92,29 +93,32 @@ func doPhrase(input string) ([]Phrase, error) {
 
 func stateStart(p *Phraser) (Phrase, PhraseFunc) {
 	p.AcceptRun(tokeniser.TokenNewline)
-	p.Get()
 	if p.Accept(tokeniser.TokenComment) {
-		p.AcceptRun(tokeniser.TokenComment, tokeniser.TokenNewline)
+		p.AcceptRun(tokeniser.TokenComment, tokeniser.TokenNewline, tokeniser.TokenWhitespace)
 		return Phrase{p.Get(), PhraseTop}, stateStart
 	}
 	if c := p.Peek(); p.Accept(tokeniser.TokenKeyword) {
 		return p.importOrClass(c)
 	}
-	return Phrase{}, nil
+	if p.Peek() == done {
+		return stateDone(p)
+	}
+	return stateError(p)
 }
 
 func stateMain(p *Phraser) (Phrase, PhraseFunc) {
 	p.AcceptRun(tokeniser.TokenNewline)
-	p.Get()
 	if p.Accept(tokeniser.TokenComment) {
-		p.AcceptRun(tokeniser.TokenComment, tokeniser.TokenNewline)
+		p.AcceptRun(tokeniser.TokenComment, tokeniser.TokenNewline, tokeniser.TokenWhitespace)
 		return Phrase{p.Get(), PhraseTop}, stateMain
 	}
 	if c := p.Peek(); p.Accept(tokeniser.TokenIdentifier) {
 		return p.identifier(c)
 	}
-
-	return Phrase{}, nil
+	if p.Peek().Type == tokeniser.TokenDone {
+		return stateDone(p)
+	}
+	return stateError(p)
 }
 
 func stateDone(p *Phraser) (Phrase, PhraseFunc) {
@@ -172,6 +176,7 @@ func (p *Phraser) ExceptRun(types ...tokeniser.TokenType) tokeniser.Token {
 
 func (p *Phraser) Peek() tokeniser.Token {
 	if p.pos >= len(p.tokens) {
+		fmt.Println("!!!!!!!!!!!!!")
 		return done
 	}
 	char := p.tokens[p.pos]
@@ -190,6 +195,7 @@ func (p *Phraser) importOrClass(c tokeniser.Token) (Phrase, PhraseFunc) {
 		return Phrase{p.Get(), PhraseImport}, stateStart
 	}
 	if c.Val == "class" {
+		p.ExceptRun(tokeniser.TokenDelimiter)
 		return Phrase{p.Get(), PhraseClass}, stateMain
 	}
 	return Phrase{p.Get(), PhraseError}, stateError
@@ -203,7 +209,7 @@ func (p *Phraser) identifier(c tokeniser.Token) (Phrase, PhraseFunc) {
 	if c.Val == "homepage" {
 		return Phrase{p.Get(), PhraseHomepage}, stateMain
 	}
-	if c.Val == "url" {
+	if c.Val == "url" || c.Val == "git" || c.Val == "urls" {
 		return Phrase{p.Get(), PhraseURL}, stateMain
 	}
 	if c.Val == "versions" {
@@ -212,5 +218,5 @@ func (p *Phraser) identifier(c tokeniser.Token) (Phrase, PhraseFunc) {
 	if c.Val == "depends_on" {
 		return Phrase{p.Get(), PhraseDependsOn}, stateMain
 	}
-	return Phrase{p.Get(), PhraseError}, stateError
+	return Phrase{p.Get(), PhraseExtra}, stateMain
 }
