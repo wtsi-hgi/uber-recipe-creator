@@ -5,6 +5,8 @@ import (
 	"errors"
 	"reflect"
 	"testing"
+
+	"github.com/wtsi-hgi/uber-recipe-creator/internal/testdata"
 )
 
 func TestTokeniser(t *testing.T) {
@@ -777,12 +779,6 @@ func TestTokeniser(t *testing.T) {
 	}
 }
 
-//go:embed test.py
-var testFile string
-
-//go:embed package.py
-var testRecipe string
-
 func TestPythonFile(t *testing.T) {
 	expected := []Token{
 		{"import", TokenKeyword},
@@ -1164,7 +1160,7 @@ func TestPythonFile(t *testing.T) {
 		{"\n\n", TokenNewline},
 	}
 
-	tokens, _ := Tokenise(testFile)
+	tokens, _ := Tokenise(testdata.TestScript1)
 	if !reflect.DeepEqual(tokens, expected) {
 		t.Errorf("failed!")
 	}
@@ -1386,7 +1382,7 @@ func TestRecipeFile(t *testing.T) {
 		{"\n", TokenNewline},
 	}
 
-	tokens, _ := Tokenise(testRecipe)
+	tokens, _ := Tokenise(testdata.TestRecipe1)
 	if !reflect.DeepEqual(tokens, expected) {
 		t.Errorf("failed!")
 	}
