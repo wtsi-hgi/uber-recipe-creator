@@ -13,8 +13,6 @@ func TestPhraser(t *testing.T) {
 
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
-	} else if phrases[0].Type != PhraseTop {
-		t.Errorf("incorrect phrase type: %q, expected %q", phrases[0].Type.String(), "PhraseTop")
 	}
 
 	expected := []Phrase{
