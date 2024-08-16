@@ -270,26 +270,34 @@ class RArraymvout(RPackage):
 		}
 
 		if !reflect.DeepEqual(recipe, test.expectation) {
+			errorPrinted := false
 			if recipe.Header != test.expectation.Header {
 				t.Errorf("Test %d: header:\n\tgot  %v\n\twant %v", n+1, recipe.Header, test.expectation.Header)
+				errorPrinted = true
 			}
 			if recipe.Indent != test.expectation.Indent {
 				t.Errorf("Test %d: indent:\n\tgot  %v\n\twant %v", n+1, recipe.Indent, test.expectation.Indent)
+				errorPrinted = true
 			}
 			for i, version := range recipe.Versions {
 				if !reflect.DeepEqual(version, test.expectation.Versions[i]) {
 					t.Errorf("Test %d: version %d:\n\tgot  %v\n\twant %v", n+1, i+1, version, test.expectation.Versions[i])
+					errorPrinted = true
 				}
 			}
 			for i, dependency := range recipe.Depends {
 				if !reflect.DeepEqual(dependency, test.expectation.Depends[i]) {
 					t.Errorf("Test %d: dependency %d:\n\tgot  %v\n\twant %v", n+1, i+1, dependency, test.expectation.Depends[i])
+					errorPrinted = true
 				}
 			}
 			if recipe.Footer != test.expectation.Footer {
 				t.Errorf("Test %d: footer:\n\tgot  %v\n\twant %v", n+1, recipe.Footer, test.expectation.Footer)
+				errorPrinted = true
 			}
-			t.Errorf("Test %d: recipe:\n\tgot  %v\n\twant %v", n+1, recipe, test.expectation)
+			if !errorPrinted {
+				t.Errorf("Test %d: recipe:\n\tgot  %v\n\twant %v", n+1, recipe, test.expectation)
+			}
 		}
 	}
 }

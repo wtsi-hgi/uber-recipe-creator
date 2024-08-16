@@ -1162,7 +1162,11 @@ func TestPythonFile(t *testing.T) {
 
 	tokens, _ := Tokenise(testdata.TestScript1)
 	if !reflect.DeepEqual(tokens, expected) {
-		t.Errorf("failed!")
+		for i, token := range tokens {
+			if token != expected[i] {
+				t.Errorf("expected %v, got %v", expected[i], token)
+			}
+		}
 	}
 }
 
@@ -1190,28 +1194,30 @@ func TestRecipeFile(t *testing.T) {
 		{" ", TokenWhitespace},
 		{"Nextdenovo", TokenIdentifier},
 		{"(", TokenDelimiter},
+		{"\n\t", TokenWhitespace},
 		{"MakefilePackage", TokenIdentifier},
+		{"\n\t", TokenWhitespace},
 		{")", TokenDelimiter},
 		{":", TokenDelimiter},
 		{"\n", TokenNewline},
-		{"    ", TokenWhitespace},
-		{"\"\"\"NextDenovo is a string graph-based de novo assembler for long reads.\n    idk\n    something \n    \n    \n    \n    hello\"\"\"", TokenString},
+		{"\t", TokenWhitespace},
+		{"\"\"\"NextDenovo is a string graph-based de novo assembler for long reads.\n\tidk\n\tsomething \n\t\n\t\n\t\n\thello\"\"\"", TokenString},
 		{"\n\n", TokenNewline},
-		{"    ", TokenWhitespace},
+		{"\t", TokenWhitespace},
 		{"homepage", TokenIdentifier},
 		{" ", TokenWhitespace},
 		{"=", TokenDelimiter},
 		{" ", TokenWhitespace},
 		{"\"https://nextdenovo.readthedocs.io/en/latest/index.html\"", TokenString},
 		{"\n", TokenNewline},
-		{"    ", TokenWhitespace},
+		{"\t", TokenWhitespace},
 		{"url", TokenIdentifier},
 		{" ", TokenWhitespace},
 		{"=", TokenDelimiter},
 		{" ", TokenWhitespace},
 		{"\"https://github.com/Nextomics/NextDenovo/archive/refs/tags/2.5.2.tar.gz\"", TokenString},
 		{"\n\n", TokenNewline},
-		{"    ", TokenWhitespace},
+		{"\t", TokenWhitespace},
 		{"version", TokenIdentifier},
 		{"(", TokenDelimiter},
 		{"\"2.5.2\"", TokenString},
@@ -1222,7 +1228,7 @@ func TestRecipeFile(t *testing.T) {
 		{"\"f1d07c9c362d850fd737c41e5b5be9d137b1ef3f1aec369dc73c637790611190\"", TokenString},
 		{")", TokenDelimiter},
 		{"\n\n", TokenNewline},
-		{"    ", TokenWhitespace},
+		{"\t", TokenWhitespace},
 		{"depends_on", TokenIdentifier},
 		{"(", TokenDelimiter},
 		{"\"python\"", TokenString},
@@ -1233,7 +1239,7 @@ func TestRecipeFile(t *testing.T) {
 		{"\"run\"", TokenString},
 		{")", TokenDelimiter},
 		{"\n", TokenNewline},
-		{"    ", TokenWhitespace},
+		{"\t", TokenWhitespace},
 		{"depends_on", TokenIdentifier},
 		{"(", TokenDelimiter},
 		{"\"py-paralleltask\"", TokenString},
@@ -1244,7 +1250,7 @@ func TestRecipeFile(t *testing.T) {
 		{"\"run\"", TokenString},
 		{")", TokenDelimiter},
 		{"\n", TokenNewline},
-		{"    ", TokenWhitespace},
+		{"\t", TokenWhitespace},
 		{"depends_on", TokenIdentifier},
 		{"(", TokenDelimiter},
 		{"\"zlib\"", TokenString},
@@ -1263,7 +1269,7 @@ func TestRecipeFile(t *testing.T) {
 		{")", TokenDelimiter},
 		{")", TokenDelimiter},
 		{"\n\n", TokenNewline},
-		{"    ", TokenWhitespace},
+		{"\t", TokenWhitespace},
 		{"def", TokenKeyword},
 		{" ", TokenWhitespace},
 		{"edit", TokenIdentifier},
@@ -1278,7 +1284,7 @@ func TestRecipeFile(t *testing.T) {
 		{")", TokenDelimiter},
 		{":", TokenDelimiter},
 		{"\n", TokenNewline},
-		{"        ", TokenWhitespace},
+		{"\t\t", TokenWhitespace},
 		{"makefile", TokenIdentifier},
 		{" ", TokenWhitespace},
 		{"=", TokenDelimiter},
@@ -1288,7 +1294,7 @@ func TestRecipeFile(t *testing.T) {
 		{"\"Makefile\"", TokenString},
 		{")", TokenDelimiter},
 		{"\n", TokenNewline},
-		{"        ", TokenWhitespace},
+		{"\t\t", TokenWhitespace},
 		{"makefile", TokenIdentifier},
 		{".", TokenDelimiter},
 		{"filter", TokenIdentifier},
@@ -1306,7 +1312,7 @@ func TestRecipeFile(t *testing.T) {
 		{")", TokenDelimiter},
 		{")", TokenDelimiter},
 		{"\n", TokenNewline},
-		{"        ", TokenWhitespace},
+		{"\t\t", TokenWhitespace},
 		{"runfile", TokenIdentifier},
 		{" ", TokenWhitespace},
 		{"=", TokenDelimiter},
@@ -1316,7 +1322,7 @@ func TestRecipeFile(t *testing.T) {
 		{"\"nextDenovo\"", TokenString},
 		{")", TokenDelimiter},
 		{"\n", TokenNewline},
-		{"        ", TokenWhitespace},
+		{"\t\t", TokenWhitespace},
 		{"runfile", TokenIdentifier},
 		{".", TokenDelimiter},
 		{"filter", TokenIdentifier},
@@ -1332,7 +1338,7 @@ func TestRecipeFile(t *testing.T) {
 		{")", TokenDelimiter},
 		{")", TokenDelimiter},
 		{"\n\n", TokenNewline},
-		{"    ", TokenWhitespace},
+		{"\t", TokenWhitespace},
 		{"def", TokenKeyword},
 		{" ", TokenWhitespace},
 		{"install", TokenIdentifier},
@@ -1347,7 +1353,7 @@ func TestRecipeFile(t *testing.T) {
 		{")", TokenDelimiter},
 		{":", TokenDelimiter},
 		{"\n", TokenNewline},
-		{"        ", TokenWhitespace},
+		{"\t\t", TokenWhitespace},
 		{"install_tree", TokenIdentifier},
 		{"(", TokenDelimiter},
 		{"\"bin\"", TokenString},
@@ -1358,7 +1364,7 @@ func TestRecipeFile(t *testing.T) {
 		{"bin", TokenIdentifier},
 		{")", TokenDelimiter},
 		{"\n", TokenNewline},
-		{"        ", TokenWhitespace},
+		{"\t\t", TokenWhitespace},
 		{"install", TokenIdentifier},
 		{"(", TokenDelimiter},
 		{"\"nextDenovo\"", TokenString},
@@ -1369,7 +1375,7 @@ func TestRecipeFile(t *testing.T) {
 		{"bin", TokenIdentifier},
 		{")", TokenDelimiter},
 		{"\n", TokenNewline},
-		{"        ", TokenWhitespace},
+		{"\t\t", TokenWhitespace},
 		{"install_tree", TokenIdentifier},
 		{"(", TokenDelimiter},
 		{"\"lib\"", TokenString},
@@ -1384,6 +1390,10 @@ func TestRecipeFile(t *testing.T) {
 
 	tokens, _ := Tokenise(testdata.TestRecipe1)
 	if !reflect.DeepEqual(tokens, expected) {
-		t.Errorf("failed!")
+		for i, token := range tokens {
+			if token != expected[i] {
+				t.Errorf("expected %v, got %v", expected[i], token)
+			}
+		}
 	}
 }

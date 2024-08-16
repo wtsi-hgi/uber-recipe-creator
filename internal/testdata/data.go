@@ -13,3 +13,6 @@ var TestCran1 string
 
 //go:embed bioc.txt
 var TestBioc1 string
+
+//go:embed PACKAGES
+var TestPackageDB string
