@@ -330,12 +330,13 @@ class RA3(RPackage):
 
 func TestReadRecipe(t *testing.T) {
 	r := testdata.TestCran1
-	parsed, err := parseRecipe(r)
+	parsed, err := parseRecipe(r, "abcrf")
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	expected := Recipe{
+		Name: "abcrf",
 		Header: `# Copyright 2013-2023 Lawrence Livermore National Security, LLC and other
 # Spack Project Developers. See the top-level COPYRIGHT file for details.
 #

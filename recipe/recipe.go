@@ -14,6 +14,7 @@ import (
 )
 
 type Recipe struct {
+	Name         string
 	Header       string
 	Indent       string
 	Versions     []Version
@@ -93,6 +94,7 @@ func New(name, repo, urlType string, urls ...string) (*Recipe, error) {
 		return nil, err
 	}
 	return &Recipe{
+		Name:   name,
 		Header: result.String(),
 		Indent: "\t",
 	}, nil
@@ -239,12 +241,13 @@ func (d Dependency) versionToSpack() string {
 // 	return parseRecipe(string(recipeBytes))
 // }
 
-func parseRecipe(r string) (Recipe, error) {
+func parseRecipe(r, name string) (Recipe, error) {
 	var recipe Recipe
 	recipeData, err := parser.DoParse(r)
 	if err != nil {
 		return Recipe{}, err
 	}
+	recipe.Name = name
 	recipe.Header = recipeData.Header
 	recipe.Indent = recipeData.Indent
 	for _, v := range recipeData.Versions {
@@ -292,4 +295,76 @@ func parseRecipe(r string) (Recipe, error) {
 		recipe.Dependencies = append(recipe.Dependencies, depends)
 	}
 	return recipe, nil
+}
+
+func (r *Recipe) checkIfUpdateNecessary(ps []Package) {
+	var pkg Package
+	for _, p := range ps {
+		if p.Name == r.Name {
+			pkg = p
+			break
+		}
+	}
+	if pkg.Name == "" {
+		return
+	}
+	for _, v := range r.Versions {
+		if v.Version == pkg.Version {
+			return
+		}
+	}
+	r.updateRecipe(pkg)
+}
+
+func (r *Recipe) updateRecipe(p Package) {
+	// TODO: this should add the missing latest version to the recipe,
+	// and configure the dependencies if they've changed.
+
+	r.Versions = append(r.Versions, Version{
+		Version: p.Version,
+		Extra: map[string]string{
+			"md5": p.MD5sum,
+		},
+	})
+
+	for _, dep := range p.Depends {
+		var skip bool
+		var change bool
+		var dependencyIndex int
+		ver := dep.versionToSpack()
+		for i, d := range r.Dependencies {
+			if d.Spec.Name == dep.Name {
+				if d.Spec.Version == ver {
+					skip = true
+					break
+				} else { // TODO: if change is false or if the version is newer
+					change = true
+					dependencyIndex = i
+				}
+			}
+		}
+		if skip {
+			continue
+		} else if change {
+			r.updateDependency(dependencyIndex, p.Version)
+		}
+
+		r.Dependencies = append(r.Dependencies, DependsOn{
+			Spec: Spec{Name: dep.Name, Version: ver},
+			Type: []string{"build", "run"},
+			When: fmt.Sprintf("@%s:", p.Version),
+		})
+	}
+}
+
+func (r *Recipe) updateDependency(i int, version string) {
+	// TODO: make sure that this code is logically sound
+	d := &r.Dependencies[i]
+	if d.When == "" {
+		d.When = "@:" + version
+		return
+	} else if strings.HasPrefix(d.When, "@:") {
+		d.When = d.When + " @:" + version
+		return
+	}
 }
